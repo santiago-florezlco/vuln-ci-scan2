@@ -24,7 +24,7 @@ jobs:
         ./skims scan --config skims.toml
 
     - name: Subir reporte Skims
-      uses: actions/upload-artifact@v3.1.2
+      uses: actions/upload-artifact@v4
       with:
         name: skims-report
         path: results/skims-report.csv
