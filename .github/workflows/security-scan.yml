@@ -26,6 +26,11 @@ jobs:
             fluidattacks/cli:latest \
             skims --strict scan skims-config.yml
 
+      - name: Encontrar lockfiles
+        run: |
+          echo "🔍 Buscando package-lock.json o yarn.lock:"
+          find . -maxdepth 3 -type f \( -name "package-lock.json" -o -name "yarn.lock" \) || echo "No encontré ninguno"
+
       - id: trivy
         name: Escaneo con Trivy
         continue-on-error: true
@@ -33,7 +38,7 @@ jobs:
           mkdir -p results
           docker run --rm \
             -v ${{ github.workspace }}:/workspace \
-            -w /workspace \
+            -w /workspace/frontend \
             aquasec/trivy:0.60.0 \
             fs . \
             --list-all-pkgs \
