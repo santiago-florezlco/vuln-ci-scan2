@@ -33,10 +33,10 @@ jobs:
         run: |
           sudo apt-get update && sudo apt-get install -y jq
 
-          npm install --package-lock-only --legacy-peer-deps
+          npm install --package-lock-only --ignore-scripts
 
           mkdir -p results
-          npm audit --json > results/npm-audit.json
+          npm audit --json > results/npm-audit.json || true
 
           jq -r '
             .advisories
