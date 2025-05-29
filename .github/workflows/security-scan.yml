@@ -31,9 +31,18 @@ jobs:
         name: Escaneo con Trivy
         uses: aquasecurity/trivy-action@0.30.0
         with:
-          scan-type: 'fs'
-          scan-ref: '.'
+          list-all-pkgs: true   
+          scan-type: fs
+          scan-ref: .
           trivy-config: trivy-config.yaml
+      
+      - name: Verificar CSV de Trivy
+        if: always()
+        run: |
+          echo "🚀 Contenido de results/:"
+          ls -l results
+          echo "⏺ Primeras líneas de trivy-report.csv:"
+          head -n 5 results/trivy-report.csv || echo "(archivo vacío o no existe)"
 
       - name: Subir reportes de seguridad
         if: always()
