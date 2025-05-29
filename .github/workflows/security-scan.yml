@@ -16,7 +16,9 @@ jobs:
       - name: Preparar carpeta de resultados
         run: mkdir -p results
 
-      - name: Escaneo SAST con Skims
+      - id: skims
+        name: Escaneo SAST con Skims
+        continue-on-error: true
         run: |
           docker run --rm \
             -v ${{ github.workspace }}:/workspace \
@@ -24,7 +26,9 @@ jobs:
             fluidattacks/cli:latest \
             skims --strict scan skims-config.yml
 
-      - name: Escaneo con Trivy
+      - id: trivy
+        continue-on-error: true
+        name: Escaneo con Trivy
         uses: aquasecurity/trivy-action@0.30.0
         with:
           scan-type: 'fs'
@@ -37,3 +41,11 @@ jobs:
         with:
           name: security-reports
           path: results/*.csv
+
+      - name: Comprobar vulnerabilidades y fallar build
+        if: always()
+        run: |
+          if [[ "${{ steps.skims.outcome }}" == "failure" ]] || [[ "${{ steps.trivy.outcome }}" == "failure" ]]; then
+            echo "::error::Se detectaron vulnerabilidades (Skims=${{ steps.skims.outcome }}, Trivy=${{ steps.trivy.outcome }})"
+            exit 1
+          fi
