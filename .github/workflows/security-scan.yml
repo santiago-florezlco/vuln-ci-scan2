@@ -30,10 +30,11 @@ jobs:
         name: Escaneo con Trivy
         continue-on-error: true
         run: |
+          mkdir -p results
           docker run --rm \
             -v ${{ github.workspace }}:/workspace \
             -w /workspace \
-            aquasecurity/trivy:0.60.0 \
+            aquasec/trivy:0.60.0 \
             fs . \
             --list-all-pkgs \
             --format template \
