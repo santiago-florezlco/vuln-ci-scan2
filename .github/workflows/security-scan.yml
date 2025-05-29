@@ -25,42 +25,33 @@ jobs:
             -w /workspace \
             fluidattacks/cli:latest \
             skims --strict scan skims-config.yml
-      
-      - name: Generar package-lock en frontend
-        run: |
-          cd frontend
-          npm install --package-lock-only
 
-      - name: Encontrar lockfiles
-        run: |
-          echo "🔍 Buscando package-lock.json o yarn.lock:"
-          find . -maxdepth 3 -type f \( -name "package-lock.json" -o -name "yarn.lock" \) || echo "No encontré ninguno"
 
-      - id: trivy
-        name: Escaneo con Trivy (Dependencias y Archivos)
+      - id: npm_audit
+        name: Escaneo SCA con npm audit
         continue-on-error: true
         run: |
-          # Aseguramos que exista la carpeta de resultados
+          sudo apt-get update && sudo apt-get install -y jq
+
+          npm install --package-lock-only --legacy-peer-deps
+
           mkdir -p results
-          docker run --rm \
-            -v ${{ github.workspace }}:/workspace \
-            -w /workspace \
-            aquasec/trivy:0.60.0 \
-            fs frontend \
-            --format template \
-            --template "{{- range . -}}{{- range .Vulnerabilities -}}{{ .Target }},{{ .PkgName }},{{ .VulnerabilityID }},{{ .Severity }}\n{{- end }}{{- end }}" \
-            --severity HIGH,CRITICAL \
-            --ignore-unfixed \
-            --exit-code 1 \
-            --output results/trivy-report.csv
-      
-      - name: Verificar CSV de Trivy
+          npm audit --json > results/npm-audit.json
+
+          jq -r '
+            .advisories
+            | to_entries[]
+            | [.value.module_name, .value.severity, .value.title, .value.url]
+            | @csv
+          ' results/npm-audit.json > results/npm-audit-report.csv
+
+      - name: Verificar CSV de npm audit
         if: always()
         run: |
           echo "🚀 Contenido de results/:"
           ls -l results
-          echo "⏺ Primeras líneas de trivy-report.csv:"
-          head -n 5 results/trivy-report.csv || echo "(archivo vacío o no existe)"
+          echo "⏺ Primeras líneas de npm-audit-report.csv:"
+          head -n 5 results/npm-audit-report.csv || echo "(vacío o no existe)"
 
       - name: Subir reportes de seguridad
         if: always()
@@ -72,7 +63,9 @@ jobs:
       - name: Comprobar vulnerabilidades y fallar build
         if: always()
         run: |
-          if [[ "${{ steps.skims.outcome }}" == "failure" ]] || [[ "${{ steps.trivy.outcome }}" == "failure" ]]; then
-            echo "::error::Se detectaron vulnerabilidades (Skims=${{ steps.skims.outcome }}, Trivy=${{ steps.trivy.outcome }})"
+          if [[ "${{ steps.skims.outcome }}"  == "failure" ]] \
+          || [[ "${{ steps.npm_audit.outcome }}" == "failure" ]]; then
+            echo "::error::Se detectaron vulnerabilidades (Skims=${{ steps.skims.outcome }}, npm_audit=${{ steps.npm_audit.outcome }})"
             exit 1
           fi
+
