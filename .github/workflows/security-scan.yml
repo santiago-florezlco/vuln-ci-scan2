@@ -12,6 +12,9 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
+    - name: Preparar carpeta de resultados
+      run: mkdir -p results
+
     - name: Ejecutar Skims vía Docker
       run: |
         docker run --rm \
