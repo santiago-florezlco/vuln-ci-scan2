@@ -1,0 +1,13 @@
+# skims-config.yml
+namespace: vulnerable-app
+output:
+  file_path: results/skims-report.csv
+  format: CSV
+working_dir: .
+language: EN
+sast:
+  include:
+    - .
+  exclude:
+    - glob(**/node_modules/**)
+    - glob(**/test/**)
