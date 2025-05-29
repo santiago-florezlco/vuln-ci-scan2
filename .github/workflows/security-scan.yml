@@ -1,3 +1,4 @@
+# .github/workflows/security-scan.yml
 name: Seguridad CI
 
 on:
@@ -6,25 +7,41 @@ on:
   pull_request:
 
 jobs:
-  skims-scan:
+  security-scan:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
-    - name: Preparar carpeta de resultados
-      run: mkdir -p results
+      - name: Preparar carpeta de resultados
+        run: mkdir -p results
 
-    - name: Ejecutar Skims vía Docker
-      run: |
-        docker run --rm \
-          -v ${{ github.workspace }}:/workspace \
-          -w /workspace \
-          fluidattacks/cli:latest \
-          skims --strict scan skims-config.yml
+      - name: Escaneo SAST con Skims
+        run: |
+          docker run --rm \
+            -v ${{ github.workspace }}:/workspace \
+            -w /workspace \
+            fluidattacks/cli:latest \
+            skims --strict scan skims-config.yml
 
-    - name: Subir reporte Skims
-      uses: actions/upload-artifact@v4
-      with:
-        name: skims-report
-        path: results/skims-report.csv
+      - name: Escaneo con Trivy
+        uses: aquasecurity/trivy-action@v0.6.0
+        with:
+          scan-type: filesystem
+          format: 'template'
+          template: |
+            {{- range .Results -}}
+              {{- range .Vulnerabilities -}}
+                {{ .PkgName }},{{ .VulnerabilityID }},{{ .InstalledVersion }},{{ .Severity }}
+              {{- end -}}
+            {{- end -}}
+          output: results/trivy-report.csv
+          severity: CRITICAL,HIGH
+          exit-code: 1
+
+      - name: Subir reportes de seguridad
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-reports
+          path: results/*.csv
