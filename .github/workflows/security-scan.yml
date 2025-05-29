@@ -25,6 +25,11 @@ jobs:
             -w /workspace \
             fluidattacks/cli:latest \
             skims --strict scan skims-config.yml
+      
+      - name: Generar package-lock en frontend
+        run: |
+          cd frontend
+          npm install --package-lock-only
 
       - name: Encontrar lockfiles
         run: |
@@ -32,16 +37,16 @@ jobs:
           find . -maxdepth 3 -type f \( -name "package-lock.json" -o -name "yarn.lock" \) || echo "No encontré ninguno"
 
       - id: trivy
-        name: Escaneo con Trivy
+        name: Escaneo con Trivy (Dependencias y Archivos)
         continue-on-error: true
         run: |
+          # Aseguramos que exista la carpeta de resultados
           mkdir -p results
           docker run --rm \
             -v ${{ github.workspace }}:/workspace \
-            -w /workspace/frontend \
+            -w /workspace \
             aquasec/trivy:0.60.0 \
-            fs . \
-            --list-all-pkgs \
+            fs frontend \
             --format template \
             --template "{{- range . -}}{{- range .Vulnerabilities -}}{{ .Target }},{{ .PkgName }},{{ .VulnerabilityID }},{{ .Severity }}\n{{- end }}{{- end }}" \
             --severity HIGH,CRITICAL \
