@@ -27,14 +27,21 @@ jobs:
             skims --strict scan skims-config.yml
 
       - id: trivy
-        continue-on-error: true
         name: Escaneo con Trivy
-        uses: aquasecurity/trivy-action@0.30.0
-        with:
-          list-all-pkgs: true   
-          scan-type: fs
-          scan-ref: .
-          trivy-config: trivy-config.yaml
+        continue-on-error: true
+        run: |
+          docker run --rm \
+            -v ${{ github.workspace }}:/workspace \
+            -w /workspace \
+            aquasecurity/trivy:0.60.0 \
+            fs . \
+            --list-all-pkgs \
+            --format template \
+            --template "{{- range . -}}{{- range .Vulnerabilities -}}{{ .Target }},{{ .PkgName }},{{ .VulnerabilityID }},{{ .Severity }}\n{{- end }}{{- end }}" \
+            --severity HIGH,CRITICAL \
+            --ignore-unfixed \
+            --exit-code 1 \
+            --output results/trivy-report.csv
       
       - name: Verificar CSV de Trivy
         if: always()
