@@ -1,0 +1,30 @@
+name: Seguridad CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  skims-scan:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Descargar Skims
+      run: |
+        curl -sL https://github.com/fluidattacks/skims/releases/latest/download/skims_linux_amd64.tar.gz \
+          | tar xz -C ${{ github.workspace }}
+        chmod +x ${{ github.workspace }}/skims
+
+    - name: Ejecutar Skims SAST
+      run: |
+        mkdir -p results
+        ./skims scan --config skims.toml
+
+    - name: Subir reporte Skims
+      uses: actions/upload-artifact@v3
+      with:
+        name: skims-report
+        path: results/skims-report.csv

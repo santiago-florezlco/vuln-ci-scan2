@@ -1,0 +1,17 @@
+# skims.toml
+
+[scan]
+# 1) paths: qué carpetas o archivos escanear. 
+#    Usa ["./"] para todo el repositorio.
+paths = ["./"]
+
+# 2) output_format: formato de reporte.
+#    “csv” para obtener un CSV directamente.
+output_format = "csv"
+
+# 3) output: dónde se guardará el CSV tras el scan.
+output = "results/skims-report.csv"
+
+# 4) fail_on: severidades que harán fallar el build.
+#    Si Skims detecta HIGH o CRITICAL, devolverá exit ≠ 0.
+fail_on = ["HIGH", "CRITICAL"]
