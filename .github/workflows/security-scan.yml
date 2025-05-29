@@ -39,9 +39,9 @@ jobs:
           npm audit --json > results/npm-audit.json || true
 
           jq -r '
-            .advisories
+            .vulnerabilities
             | to_entries[]
-            | [.value.module_name, .value.severity, .value.title, .value.url]
+            | [.key, .value.severity, (.value.via[0].title // ""), (.value.via[0].url // "")]
             | @csv
           ' results/npm-audit.json > results/npm-audit-report.csv
 
