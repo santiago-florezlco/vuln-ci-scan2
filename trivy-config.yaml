@@ -1,0 +1,12 @@
+# trivy-config.yaml
+format: template
+template: |
+  {{- range .Results -}}
+    {{- range .Vulnerabilities -}}
+      {{ .PkgName }},{{ .VulnerabilityID }},{{ .InstalledVersion }},{{ .Severity }}
+    {{- end -}}
+  {{- end -}}
+output: results/trivy-report.csv
+exit-code: 1
+severity: CRITICAL,HIGH
+ignore-unfixed: true

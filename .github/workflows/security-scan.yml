@@ -25,19 +25,11 @@ jobs:
             skims --strict scan skims-config.yml
 
       - name: Escaneo con Trivy
-        uses: aquasecurity/trivy-action@v0.6.0
+        uses: aquasecurity/trivy-action@v0.30.0
         with:
-          scan-type: filesystem
-          format: 'template'
-          template: |
-            {{- range .Results -}}
-              {{- range .Vulnerabilities -}}
-                {{ .PkgName }},{{ .VulnerabilityID }},{{ .InstalledVersion }},{{ .Severity }}
-              {{- end -}}
-            {{- end -}}
-          output: results/trivy-report.csv
-          severity: CRITICAL,HIGH
-          exit-code: 1
+          scan-type: 'fs'
+          scan-ref: '.'
+          trivy-config: trivy-config.yaml
 
       - name: Subir reportes de seguridad
         if: always()
