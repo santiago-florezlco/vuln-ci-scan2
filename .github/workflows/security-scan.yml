@@ -36,14 +36,26 @@ jobs:
           npm install --package-lock-only --ignore-scripts
 
           mkdir -p results
-          npm audit --json > results/npm-audit.json || true
+          npm audit --json > results/npm-audit.json || AUDIT_EXIT=$?
 
           jq -r '
             .vulnerabilities
             | to_entries[]
-            | [.key, .value.severity, (.value.via[0].title // ""), (.value.via[0].url // "")]
+            | . as $entry
+            | ($entry.value.via
+               | map(select(type=="object"))
+               | first // {}) as $adv
+            | [
+                $entry.key,
+                $entry.value.severity,
+                ($adv.title // ""),
+                ($adv.url   // "")
+              ]
             | @csv
           ' results/npm-audit.json > results/npm-audit-report.csv
+
+          if [[ "$AUDIT_EXIT" != "" ]]; then exit 1; fi
+
 
       - name: Verificar CSV de npm audit
         if: always()
