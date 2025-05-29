@@ -25,7 +25,7 @@ jobs:
             skims --strict scan skims-config.yml
 
       - name: Escaneo con Trivy
-        uses: aquasecurity/trivy-action@v0.30.0
+        uses: aquasecurity/trivy-action@0.30.0
         with:
           scan-type: 'fs'
           scan-ref: '.'
