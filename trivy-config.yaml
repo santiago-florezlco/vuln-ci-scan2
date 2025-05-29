@@ -1,7 +1,7 @@
 # trivy-config.yaml
 format: template
 template: |
-  {{- range .Results -}}
+  {{- range . -}}
     {{- range .Vulnerabilities -}}
       {{ .PkgName }},{{ .VulnerabilityID }},{{ .InstalledVersion }},{{ .Severity }}
     {{- end -}}
